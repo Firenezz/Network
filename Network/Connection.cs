@@ -145,7 +145,7 @@ namespace Network
         /// </summary>
         /// <param name="connectionStream">The connection stream.</param>
         /// <param name="endPoint">The end point.</param>
-        internal virtual void Init()
+        internal void Init()
         {
             InitAddons();
 

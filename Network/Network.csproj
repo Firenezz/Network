@@ -121,7 +121,6 @@
     <Compile Include="Packets\UDPPingResponse.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Secure\CertificateGenerator.cs" />
-    <Compile Include="Secure\SecureConnection.cs" />
     <Compile Include="Secure\SecureConnectionConfiguration.cs" />
     <Compile Include="Secure\SecureServerConnectionContainer.cs" />
     <Compile Include="Secure\TcpSecureClientConnection.cs" />
