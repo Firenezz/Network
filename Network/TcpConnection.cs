@@ -28,12 +28,12 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // ***********************************************************************
 #endregion Licence - LGPLv3
+using Network.Enums;
+using Network.Packets;
 using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using Network.Enums;
-using Network.Packets;
 
 namespace Network
 {

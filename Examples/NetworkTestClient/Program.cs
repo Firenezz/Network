@@ -47,12 +47,13 @@ namespace NetworkTestClient
                 Console.WriteLine("<5> Object driven example");
                 Console.WriteLine("<6> TcpConnection only example");
                 Console.WriteLine("<7> RawData example");
-                Console.WriteLine("<8> Exit");
+                Console.WriteLine("<8> SSL example");
+                Console.WriteLine("<9> Exit");
                 Console.Write("> ");
 
 
                 input = 0;
-                while(!int.TryParse(Console.ReadLine(), out input) || input < 1 || input > 7)
+                while(!int.TryParse(Console.ReadLine(), out input) || input < 1 || input > 8)
                     Console.Write("> ");
 
                 switch(input)
@@ -77,6 +78,9 @@ namespace NetworkTestClient
                         break;
                     case 7:
                         new RawDataExample().Demo();
+                        break;
+                    case 8:
+                        new SSLExample().Demo();
                         break;
                     default:
                         throw new ArgumentException();

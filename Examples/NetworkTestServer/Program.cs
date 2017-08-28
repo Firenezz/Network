@@ -36,6 +36,7 @@ using Network.Extensions;
 using TestServerClientPackets;
 using TestServerClientPackets.ExamplePacketsOne;
 using TestServerClientPackets.ExamplePacketsOne.Containers;
+using Network.Secure;
 
 namespace NetworkTestServer
 {
@@ -55,16 +56,24 @@ namespace NetworkTestServer
         }
 
         private ServerConnectionContainer serverConnectionContainer;
+        private SecureServerConnectionContainer secureServerConnectionContainer;
 
         public void Demo()
         {
+            //ONLY REQUIRED FOR THE SECURE SERVER CONNECTION CONTAINER. (SSL)
+            SecureConnectionConfiguration secureConnectionConfiguration = SecureConnectionConfigurationHelper.GetConfiguration();
+            secureConnectionConfiguration.LoadCertificate("certificate.pfx", "psw");
+
             //1. Start listen on a port
             serverConnectionContainer = ConnectionFactory.CreateServerConnectionContainer(1234, false);
+            secureServerConnectionContainer = ConnectionFactory.CreateSecureServerConnectionContainer(ref secureConnectionConfiguration, 1235, false);
 
             //2. Apply optional settings.
             #region Optional settings
             serverConnectionContainer.ConnectionLost += (a, b, c) => Console.WriteLine($"{serverConnectionContainer.Count} {b.ToString()} Connection lost {a.IPRemoteEndPoint.Port}. Reason {c.ToString()}");
             serverConnectionContainer.ConnectionEstablished += connectionEstablished;
+            secureServerConnectionContainer.ConnectionLost += (a, b, c) => Console.WriteLine($"{serverConnectionContainer.Count} {b.ToString()} Connection lost {a.IPRemoteEndPoint.Port}. Reason {c.ToString()}");
+            secureServerConnectionContainer.ConnectionEstablished += connectionEstablished;
             serverConnectionContainer.AllowBluetoothConnections = true;
             serverConnectionContainer.AllowUDPConnections = true;
             serverConnectionContainer.UDPConnectionLimit = 2;
@@ -72,6 +81,7 @@ namespace NetworkTestServer
 
             //Call start here, because we had to enable the bluetooth property at first.
             serverConnectionContainer.Start();
+            secureServerConnectionContainer.Start();
         }
 
         /// <summary>

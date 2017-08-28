@@ -30,6 +30,7 @@
 #endregion Licence - LGPLv3
 using InTheHand.Net.Sockets;
 using Network.Bluetooth;
+using Network.Secure;
 using System;
 using System.IO;
 using System.Linq;
@@ -58,7 +59,12 @@ namespace Network
         /// Could not establish a UDP connection.
         /// The depending TCP connection is not alive.
         /// </summary>
-        TCPConnectionNotAlive
+        TCPConnectionNotAlive,
+        /// <summary>
+        /// Could not establish a connection because of an invalid
+        /// certificate or an invalid secure connection configuration.
+        /// </summary>
+        CertificateError
     }
 
     /// <summary>
@@ -286,6 +292,107 @@ namespace Network
         public static ServerConnectionContainer CreateServerConnectionContainer(string ipAddress, int port, bool start = true)
         {
             return new ServerConnectionContainer(ipAddress, port, start);
+        }
+
+        /// <summary>
+        /// Creates a secure server connection container.
+        /// </summary>
+        /// <param name="secureConnectionConfiguration">The secure connection configuration.</param>
+        /// <param name="port">The port.</param>
+        /// <param name="start">if set to <c>true</c> then the instance automatically starts to listen to clients.</param>
+        /// <returns>ServerConnectionContainer.</returns>
+        public static SecureServerConnectionContainer CreateSecureServerConnectionContainer(ref SecureConnectionConfiguration secureConnectionConfiguration, int port, bool start = true)
+        {
+            var connectionContainer = new SecureServerConnectionContainer(port, start);
+            connectionContainer.SecureConnectionConfiguration = secureConnectionConfiguration;
+            return connectionContainer;
+        }
+
+        /// <summary>
+        /// Creates a secure connection container.
+        /// </summary>
+        /// <param name="secureConnectionConfiguration">The secure connection configuration.</param>
+        /// <param name="ipAddress">The ip address.</param>
+        /// <param name="port">The port.</param>
+        /// <param name="start">if set to <c>true</c> then the instance automatically starts to listen to clients.</param>
+        /// <returns>ServerConnectionContainer.</returns>
+        public static SecureServerConnectionContainer CreateSecureServerConnectionContainer(ref SecureConnectionConfiguration secureConnectionConfiguration, string ipAddress, int port, bool start = true)
+        {
+            var connectionContainer = new SecureServerConnectionContainer(ipAddress, port, start);
+            connectionContainer.SecureConnectionConfiguration = secureConnectionConfiguration;
+            return connectionContainer;
+        }
+
+        /// <summary>
+        /// Creates a new secure connection configuration.
+        /// </summary>
+        /// <returns>The SecureConnectionConfiguration object with its default values.</returns>
+        public static SecureConnectionConfiguration CreateSecureConnectionConfiguration()
+        {
+            return new SecureConnectionConfiguration();
+        }
+
+        internal static TcpSecureConnection CreateSecureConnectionServer(ref SecureConnectionConfiguration secureConnectionConfiguration, TcpClient tcpClient, out ConnectionResult connectionResult)
+        {
+            if (!tcpClient.Connected) throw new ArgumentException("Socket is not connected.");
+            connectionResult = ConnectionResult.CertificateError;
+
+            try
+            {
+                var secureServerConnection = new TcpSecureServerConnection(tcpClient, secureConnectionConfiguration);
+                connectionResult = ConnectionResult.Connected;
+                return secureServerConnection;
+            }
+            catch(Exception ex)
+            {
+                ;
+            }
+
+            return null;
+        }
+
+        public static TcpSecureConnection CreateTcpSecureConnection(string ipAddress, int port, out ConnectionResult connectionResult)
+        {
+            SecureConnectionConfiguration connectionConfiguration = CreateSecureConnectionConfiguration();
+            return CreateTcpSecureConnection(ref connectionConfiguration, ipAddress, port, out connectionResult);
+        }
+
+        public static TcpSecureConnection CreateTcpSecureConnection(ref SecureConnectionConfiguration secureConnectionConfiguration, string ipAddress, int port, out ConnectionResult connectionResult)
+        {
+            Tuple<TcpSecureConnection, ConnectionResult> tcpSecureConnection = CreateTcpSecureConnectionAsync(secureConnectionConfiguration, ipAddress, port).Result;
+            connectionResult = tcpSecureConnection.Item2;
+            return tcpSecureConnection.Item1;
+        }
+
+        public static async Task<Tuple<TcpSecureConnection, ConnectionResult>> CreateTcpSecureConnectionAsync(string ipAddress, int port)
+        {
+            SecureConnectionConfiguration connectionConfiguration = CreateSecureConnectionConfiguration();
+            return await CreateTcpSecureConnectionAsync(connectionConfiguration, ipAddress, port);
+        }
+
+        public static async Task<Tuple<TcpSecureConnection, ConnectionResult>> CreateTcpSecureConnectionAsync(SecureConnectionConfiguration secureConnectionConfiguration, string ipAddress, int port)
+        {
+            ConnectionResult connectionResult = ConnectionResult.Timeout;
+            bool rawConnectionResult = false;
+            TcpClient tcpClient = null;
+
+            try
+            {
+                tcpClient = new TcpClient();
+                Task timeoutTask = Task.Delay(CONNECTION_TIMEOUT);
+                Task connectTask = Task.Factory.StartNew(() => tcpClient.Connect(ipAddress, port));
+                rawConnectionResult = (await Task.WhenAny(timeoutTask, connectTask) != timeoutTask && tcpClient.Connected);
+            }
+            catch { }
+
+            try
+            {
+                if(rawConnectionResult)
+                    return new Tuple<TcpSecureConnection, ConnectionResult>(new TcpSecureClientConnection(tcpClient, secureConnectionConfiguration), ConnectionResult.Connected);
+            }
+            catch { connectionResult = ConnectionResult.CertificateError; }
+
+            return new Tuple<TcpSecureConnection, ConnectionResult>(null, connectionResult);
         }
     }
 }

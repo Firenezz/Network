@@ -8,3 +8,10 @@
 /Examples/NetworkTestClient/obj/Debug
 /Examples/NetworkTestServer/obj/Debug
 /Examples/TestServerClientPackets/obj/Debug
+/Network/packages
+/Examples/TestServerClientPackets/bin/Debug
+/Examples/NetworkTestServer/bin/Debug
+/Examples/NetworkTestClient/bin/Debug
+/Network/NetworkSecureTestCertGenerator/bin/Debug
+/Network/NetworkSecureTestCertGenerator/obj/Debug
+/Network/obj/Debug
